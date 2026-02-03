@@ -1,24 +1,33 @@
 import pvporcupine
 import os
 from pvrecorder import PvRecorder
+def main():
+    print("Starting Jarvis voice assistant...")
+    porcupine, recorder = initialize_wake_word_detection()
+    while True:
+        audio_frame = get_next_audio_frame(recorder)
+        keyword_index = porcupine.process(audio_frame)
+        if keyword_index == 0:
+            print ("detected `jarvis`")
+        elif keyword_index == 1:
+            print ("detected `bumblebee`")
+    
+    
 
-porcupine = pvporcupine.create(
-  access_key= os.environ.get("ACCESS_KEY"),
-  keywords=['jarvis', 'bumblebee']
-)
-#make this a start recoeding function, and make a stop recording function
-recorder = PvRecorder(device_index=-1, frame_length=porcupine.frame_length)
-recorder.start()
 
 
-def get_next_audio_frame():
+def initialize_wake_word_detection():
+    porcupine = pvporcupine.create(
+      access_key= os.environ.get("ACCESS_KEY"),
+      keywords=['jarvis', 'bumblebee']
+    )
+    #make this a start recoeding function, and make a stop recording function
+    recorder = PvRecorder(device_index=-1, frame_length=porcupine.frame_length)
+    recorder.start()
+    return porcupine, recorder
+
+
+def get_next_audio_frame(recorder):
   return recorder.read()
 
-while True:
-  audio_frame = get_next_audio_frame()
-  keyword_index = porcupine.process(audio_frame)
-  if keyword_index == 0:
-      print ("detected `jarvis`")
-  elif keyword_index == 1:
-      print ("detected `bumblebee`")
-
+main()
