@@ -5,26 +5,39 @@ import picollm
 import pvcheetah
 def main():
     print("Starting Jarvis voice assistant...")
+    
+    
     porcupine, recorder = initialize_wake_word_detection()
+    pllm = initLLM()
+    
+    cheetah = initCheetah()
+    print("Jarvis is listening for the wake word...")
     while True:
+        
+        
         audio_frame = get_next_audio_frame(recorder)
         keyword_index = porcupine.process(audio_frame)
         if keyword_index == 0:
             print ("detected `jarvis`")
-            pllm = initLLM()
+            
             if pllm:
                 #todo: add conversation history
                 #todo: add speech to text
+                print ("Listening for command...")
                 #todo: add text to speech
                 #todo: add context awareness maybe?
                 #todo: add more advanced prompt engineering
                 #todo intent recognition for changing models
-                res = pllm.generate(prompt='You are Jarvis, a helpful AI assistant. Introduce yourself briefly. be creative and witty.', temperature=.7)
+                sebSaid = listenCheetah(cheetah)
+                print(sebSaid)
+                res = pllm.generate(prompt=sebSaid, temperature=.7, completion_token_limit=75)
                 print(res.completion)
                 #print("Jarvis has been summoned.")
 
         elif keyword_index == 1:
-            print ("detected `bumblebee`")
+            #print ("detected `bumblebee`")
+            sebSaid = listenCheetah()
+            print(f"Bumblebee heard: {sebSaid}")
     
     
 
@@ -60,28 +73,33 @@ def initCheetah():
     )
     return cheetah
 
-#main()
 
-cheetah = initCheetah()
-recorder = PvRecorder(device_index=-1, frame_length=cheetah.frame_length)
-recorder.start()
 
-transcript_so_far = ""
+def listenCheetah(cheetah):
 
-while True:
-    partial_transcript, is_endpoint = cheetah.process(get_next_audio_frame(recorder))
+    
+    cheetahRecorder = PvRecorder(device_index=-1, frame_length=cheetah.frame_length)
+    cheetahRecorder.start()
 
-    # keep everything Cheetah emits during the utterance
-    if partial_transcript:
-        transcript_so_far += partial_transcript
+    transcript_so_far = ""
 
-    if is_endpoint:
-        final_transcript = cheetah.flush()
-        if final_transcript:
-            transcript_so_far += final_transcript
+    while True:
+        partial_transcript, is_endpoint = cheetah.process(get_next_audio_frame(cheetahRecorder))
 
-        # print the full utterance, with whitespace cleaned up
-        print(" ".join(transcript_so_far.split()))
+        # keep everything Cheetah remits during the utterance
+        if partial_transcript:
+            transcript_so_far += partial_transcript
 
-        # reset for the next utterance
-        transcript_so_far = ""
+        if is_endpoint:
+            final_transcript = cheetah.flush()
+            if final_transcript:
+                transcript_so_far += final_transcript
+
+                # print the full utterance, with whitespace cleaned up
+                #print(" ".join(transcript_so_far.split()))
+                return (" ".join(transcript_so_far.split()))
+                # reset for the next utterance
+                transcript_so_far = ""
+
+
+if __name__ == "__main__":    main()
