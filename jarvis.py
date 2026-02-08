@@ -3,6 +3,9 @@ import os
 from pvrecorder import PvRecorder
 import picollm
 import pvcheetah
+import pvorca
+from pvspeaker import PvSpeaker
+
 def main():
     print("Starting Jarvis voice assistant...")
     
@@ -11,6 +14,14 @@ def main():
     pllm = initLLM()
     
     cheetah = initCheetah()
+    orca = initOrca()
+    speaker = PvSpeaker(sample_rate=orca.sample_rate, bits_per_sample=16)
+    speaker.start()
+    
+    
+
+
+
     print("Jarvis is listening for the wake word...")
     while True:
         
@@ -32,6 +43,8 @@ def main():
                 print(sebSaid)
                 res = pllm.generate(prompt=sebSaid, temperature=.7, completion_token_limit=75)
                 print(res.completion)
+                speakOrca(orca, speaker, res.completion)
+
                 #print("Jarvis has been summoned.")
 
         elif keyword_index == 1:
@@ -99,7 +112,29 @@ def listenCheetah(cheetah):
                 #print(" ".join(transcript_so_far.split()))
                 return (" ".join(transcript_so_far.split()))
                 # reset for the next utterance
-                transcript_so_far = ""
+                #transcript_so_far = ""
+
+def initOrca():
+    orca = pvorca.create(
+        access_key=os.environ.get("ACCESS_KEY"),
+        # model_path is optional. If you want a specific voice/language, pass a .pv model file path:
+        # model_path="/path/to/orca_model.pv"
+    )
+    return orca
+
+def speakOrca(orca, speaker, text: str):
+    stream = orca.stream_open()
+
+    pcm = stream.synthesize(text)
+    if pcm is not None:
+        speaker.write(pcm)   # <-- play the whole buffer
+
+    pcm = stream.flush()
+    if pcm is not None:
+        speaker.write(pcm)
+
+    stream.close()
+
 
 
 if __name__ == "__main__":    main()
